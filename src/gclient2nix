@@ -16,4 +16,3 @@ done
 
 jq --slurp --raw-input 'split("\n") | .[0:-1] | map(split(" ") | {type: .[0], path: .[1], name:.[2], url: .[3], rev:.[4], sha256:.[5]})' "$HASH_FILE" > ./gclient-sources.json
 cp "$SCRIPT_DIR/gclient-sources.nix" ./gclient-sources.nix
-echo foo
