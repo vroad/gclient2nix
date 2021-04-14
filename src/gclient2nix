@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -eu
+: "$NAME_PREFIX"
+
+SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+REV_INFO_FILE="$(mktemp -t rev-info-XXXXXXXXXXXXXXXX.json)"
+export REV_INFO_FILE
+HASH_FILE="$(mktemp -t hashes-XXXXXXXXXXXXXXXX.txt)"
+gclient revinfo --output-json "$REV_INFO_FILE"
+mapfile -t NIX_PREFETCH_COMMANDS < <("$SCRIPT_DIR/get-nix-prefetch-commands.sh")
+
+for line in "${NIX_PREFETCH_COMMANDS[@]}"; do
+  HASH_LINE="$(bash -c "$line")"
+  echo "$HASH_LINE" >> "$HASH_FILE"
+done
+
+jq --slurp --raw-input 'split("\n") | .[0:-1] | map(split(" ") | {type: .[0], path: .[1], name:.[2], url: .[3], rev:.[4], sha256:.[5]})' "$HASH_FILE" > ./gclient-sources.json
+cp "$SCRIPT_DIR/gclient-sources.nix" ./gclient-sources.nix
+echo foo
