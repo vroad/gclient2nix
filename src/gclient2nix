@@ -3,6 +3,7 @@ set -eu
 : "$NAME_PREFIX"
 
 SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+export SCRIPT_DIR
 REV_INFO_FILE="$(mktemp -t rev-info-XXXXXXXXXXXXXXXX.json)"
 export REV_INFO_FILE
 HASH_FILE="$(mktemp -t hashes-XXXXXXXXXXXXXXXX.txt)"
