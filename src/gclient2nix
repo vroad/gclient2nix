@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -eu
 : "$NAME_PREFIX"
+: "$DEST_DIR"
 
 SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
 export SCRIPT_DIR
@@ -10,10 +11,23 @@ HASH_FILE="$(mktemp -t hashes-XXXXXXXXXXXXXXXX.txt)"
 gclient revinfo --output-json "$REV_INFO_FILE"
 mapfile -t NIX_PREFETCH_COMMANDS < <("$SCRIPT_DIR/get-nix-prefetch-commands.sh")
 
+NIX_FILES_TO_COPY=(fetchcipd.nix fetchgit.nix gclient-deps.nix)
+for file in "${NIX_FILES_TO_COPY[@]}"; do
+  cp "$SCRIPT_DIR/$file" "$DEST_DIR/$file"
+  chmod 644 "$DEST_DIR/$file"
+done
+
+(
+  DEP_PATH="."
+  URL="$(git remote get-url origin)"
+  REV="$(git rev-parse HEAD)"
+  SHA256="$(nix-prefetch fetchgit --url "$URL" --name "$NAME_PREFIX" --rev "$REV")"
+  echo "fetchgit $DEP_PATH $NAME_PREFIX $URL $REV $SHA256" > "$HASH_FILE"
+)
+
 for line in "${NIX_PREFETCH_COMMANDS[@]}"; do
   HASH_LINE="$(bash -c "$line")"
   echo "$HASH_LINE" >> "$HASH_FILE"
 done
 
-jq --slurp --raw-input 'split("\n") | .[0:-1] | map(split(" ") | {type: .[0], path: .[1], name:.[2], url: .[3], rev:.[4], sha256:.[5]})' "$HASH_FILE" > ./gclient-sources.json
-cp "$SCRIPT_DIR/gclient-sources.nix" ./gclient-sources.nix
+jq --slurp --raw-input 'split("\n") | .[0:-1] | map(split(" ") | {type: .[0], path: .[1], name:.[2], url: .[3], rev:.[4], sha256:.[5]})' "$HASH_FILE" > "$DEST_DIR/gclient-deps.json"
