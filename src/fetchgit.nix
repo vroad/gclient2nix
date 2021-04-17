@@ -9,15 +9,18 @@ let
     fetchSubmodules = false;
   };
 in
-(fetchgit args).overrideAttrs (x: {
-  postFetch =
-    ''
-      WORK_DIR="$TMPDIR/${dirName}"
-      mkdir -p "$WORK_DIR"
-      find "$out" -mindepth 1 -maxdepth 1 -exec mv {} "$WORK_DIR" \;
+if path == "." then
+  fetchgit args
+else
+  (fetchgit args).overrideAttrs (x: {
+    postFetch =
+      ''
+        WORK_DIR="$TMPDIR/${dirName}"
+        mkdir -p "$WORK_DIR"
+        find "$out" -mindepth 1 -maxdepth 1 -exec mv {} "$WORK_DIR" \;
 
-      DEP_PATH="$out/${path}"
-      mkdir -p "$(dirname "$DEP_PATH")"
-      mv "$WORK_DIR" "$DEP_PATH"
-    '';
-})
+        DEP_PATH="$out/${path}"
+        mkdir -p "$(dirname "$DEP_PATH")"
+        mv "$WORK_DIR" "$DEP_PATH"
+      '';
+  })

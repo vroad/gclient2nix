@@ -21,7 +21,7 @@ done
   DEP_PATH="."
   URL="$(git remote get-url origin)"
   REV="$(git rev-parse HEAD)"
-  SHA256="$(nix-prefetch fetchgit --url "$URL" --name "$NAME_PREFIX" --rev "$REV")"
+  SHA256="$(nix-prefetch -f "$SCRIPT_DIR/fetchgit.nix" --url "$URL" --name "$NAME_PREFIX" --rev "$REV" --path "$DEP_PATH")"
   echo "fetchgit $DEP_PATH $NAME_PREFIX $URL $REV $SHA256" > "$HASH_FILE"
 )
 
